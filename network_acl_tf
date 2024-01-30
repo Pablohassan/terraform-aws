@@ -1,0 +1,45 @@
+# Créer un NACL pour accéder à l'hôte bastion via le port 22
+resource "aws_network_acl" "datascientest_public_a" {
+  vpc_id = aws_vpc.datascientest_vpc.id
+
+  subnet_ids = ["${aws_subnet.public_subnet_a.id}"]
+
+  tags = {
+    Name = "acl-datascientest-public-a"
+  }
+}
+
+resource "aws_network_acl" "datascientest_public_b" {
+  vpc_id = aws_vpc.datascientest_vpc.id
+
+  subnet_ids = ["${aws_subnet.public_subnet_b.id}"]
+
+  tags = {
+    Name = "acl-datascientest-public-b"
+  }
+}
+
+
+resource "aws_network_acl_rule" "nat_inbound" {
+  network_acl_id = aws_network_acl.datascientest_public_a.id
+  rule_number    = 200
+  egress         = false
+  protocol       = "-1" #Tous les protocles (TCP/UDP...)
+  rule_action    = "allow"
+  # L'ouverture à 0.0.0.0/0 peut entraîner des failles de sécurité. vous devez restreindre uniquement l'acces à votre ip publique
+  cidr_block = "0.0.0.0/0"
+  from_port  = 0
+  to_port    = 0
+}
+
+resource "aws_network_acl_rule" "nat_inboundb" {
+  network_acl_id = aws_network_acl.datascientest_public_b.id
+  rule_number    = 200
+  egress         = true
+  protocol       = "-1"
+  rule_action    = "allow"
+  # L'ouverture à 0.0.0.0/0 peut entraîner des failles de sécurité. vous devez restreindre uniquement l'acces à votre ip publique
+  cidr_block = "0.0.0.0/0"
+  from_port  = 0
+  to_port    = 0
+}
